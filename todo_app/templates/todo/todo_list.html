@@ -1,0 +1,115 @@
+{% extends 'todo/base.html' %}
+
+{% block content %}
+
+<div class="page-content page-container" id="page-content">
+    <div class="padding">
+        <div class="row container d-flex justify-content-center">
+            <div class="col-md-12">
+                <div class="card px-3">
+                    <div class="card-body">
+                        <h4 class="card-title">Todo list</h4>
+                          <form action="." method="POST">
+                            {% csrf_token %}
+                            {% if form.assignment.errors %}
+                            <ul>
+                              <li><strong>This field is required</strong></li>
+                            </ul>
+                            {% endif %}
+                            <div class="add-items d-flex">
+                            <input type="text"  name="assignment" class="form-control todo-list-input" placeholder="What do you need to do?" required>
+                            <input name="due" id="dtpicker" class="form-control todo-list-input" placeholder="Enter due date.." autocomplete="off">
+                            <input type='submit' value='Add' class="add btn btn-primary font-weight-bold todo-list-add-btn"></div>
+                          </form>
+                          <div class="list-wrapper">
+                            <ul class="d-flex flex-column-reverse todo-list">
+                              {% for instance in objects %}
+                                <li>
+                                    <div class="form-check"><form action="{% url 'todo:todo-update' instance.id %}" method="POST">{% csrf_token %}<label class="checkbox"> <input name="completed" onclick="this.form.submit();" type="checkbox" class="checkbox" value="{{instance.id}}" {% if instance.completed %} checked {% endif %}></label>
+                                    {% if instance.due == None %}
+                                      <span>{{instance.assignment}}</span>
+                                    {% elif instance.completed %}
+                                      <strike>{{instance.assignment}}</strike><p id="countdown-{{forloop.counter}}" class="countd" data-num="{{objects|length}}" data-id="{{instance.id}}" style="display:none;">{{instance.due|date:"m/d/Y, H:i:s"}}</p><span style="display:none;" id="cd-timer-{{forloop.counter}}"></span>
+                                    {%else%}
+                                      <span>{{instance.assignment}}</span><p id="countdown-{{forloop.counter}}" class="countd" data-num="{{objects|length}}" data-id="{{instance.id}}" style="display:none;">{{instance.due|date:"m/d/Y, H:i:s"}}</p><span class="cd-timer" id="cd-timer-{{forloop.counter}}"></span>
+                                    {% endif %}
+                                    </div></form>
+                                    <form action="{% url 'todo:todo-delete' instance.id %}" method="POST">
+                                      {% csrf_token %}
+                                     <button type="submit" class="fav-button"><i class="remove mdi mdi-close-circle-outline"></i></button>
+                                   </form>
+                                </li>
+                              {% endfor %}
+                            </ul>
+                              </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+$(function () {
+  $("#dtpicker").datetimepicker({
+    format: 'd/m/Y H:i',
+    minDate: '0',
+  });
+});
+
+</script>
+
+<script>
+// Set the date we're counting down to
+
+function createCountDown(elementId, date) {
+
+var countDownDate = new Date(date).getTime();
+// Update the count down every 1 second
+var x = setInterval(function() {
+
+  // Get today's date and time
+  var now = new Date().getTime();
+
+  // Find the distance between now and the count down date
+  var distance = countDownDate - now;
+
+  // Function to add leading zeros
+  var addLeadingZeros = function(number){
+    return (number < 10) ? "0" + number : number;
+  }
+
+  // Time calculations for days, hours, minutes and seconds
+  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+  // Output the result in an element with id="demo"
+  document.getElementById(elementId).innerHTML =" Due: " + addLeadingZeros(days) + "d " + addLeadingZeros(hours) + "h "
+  + addLeadingZeros(minutes) + "m " + addLeadingZeros(seconds) + "s ";
+
+  // If the count down is over, write some text
+  if (distance < 0) {
+    clearInterval(x);
+    document.getElementById(elementId).innerHTML = "EXPIRED";
+  }
+}, 1000);
+}
+
+//Output the results to element Id's
+var numObjects = document.getElementsByClassName("countd")[0].getAttribute("data-num");
+for (var i=1; i<=numObjects; i++){
+  if(document.getElementById("countdown-"+i.toString()) !== null){
+    var dateTime = document.getElementById("countdown-"+i.toString()).textContent;
+    createCountDown("cd-timer-"+i.toString(), dateTime)
+  }
+}
+
+</script>
+
+
+
+{% endblock %}
